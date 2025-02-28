@@ -93,14 +93,21 @@ def configure_lm(provider='openai'):
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
         
-        return dspy.Anthropic(model="claude-3-sonnet-20240229", api_key=api_key)
+        return dspy.LM('anthropic/claude-3-opus-20240229', api_key=api_key)
     else:
         # Default to OpenAI
         api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
         
-        return dspy.OpenAI(model="gpt-4-turbo", api_key=api_key)
+        # In dspy v2.0.0+, use ChatOpenAI instead of OpenAI
+        try:
+            return dspy.LM('openai/gpt-4o-mini', api_key=api_key)
+        except AttributeError:
+            # Fallback for compatibility with different dspy versions
+            import openai
+            openai.api_key = api_key
+            return dspy.LM('openai/gpt-4o-mini', api_key=api_key)
 
 def bootstrap_examples():
     """Create examples for bootstrapping."""

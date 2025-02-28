@@ -192,7 +192,14 @@ def configure_lm(provider='openai'):
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not found")
         
-        return dspy.OpenAI(model="gpt-4-turbo", api_key=api_key)
+        # In dspy v2.0.0+, use ChatOpenAI instead of OpenAI
+        try:
+            return dspy.ChatOpenAI(model="gpt-4-turbo", api_key=api_key)
+        except AttributeError:
+            # Fallback for compatibility with different dspy versions
+            import openai
+            openai.api_key = api_key
+            return dspy.OpenAIChat(model="gpt-4-turbo")
 
 def bootstrap_examples():
     """Create examples for bootstrapping."""
@@ -628,7 +635,7 @@ def workout_history():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the Workout Vibe web application")
-    parser.add_argument('--port', type=int, default=5000, help='Port to run the server on')
+    parser.add_argument('--port', type=int, default=5001, help='Port to run the server on')
     parser.add_argument('--debug', action='store_true', help='Run in debug mode')
     args = parser.parse_args()
     
