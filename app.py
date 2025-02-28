@@ -121,24 +121,24 @@ class GymDB:
 # DSPy Classes for Workout Generation
 class Exercise(dspy.Signature):
     """Information about an exercise."""
-    id: int
-    name: str
-    muscle_group: str
-    equipment: str
+    id: int = dspy.OutputField()
+    name: str = dspy.OutputField()
+    muscle_group: str = dspy.OutputField()
+    equipment: str = dspy.OutputField()
 
 class WorkoutRequest(dspy.Signature):
     """A request for a workout."""
-    description: str
-    gym_equipment: List[Dict]
+    description: str = dspy.InputField()
+    gym_equipment: List[Dict] = dspy.InputField()
 
 class WorkoutPlan(dspy.Signature):
     """A workout plan with exercises."""
-    title: str
-    description: str
-    exercises: List[Dict[str, Any]]
-    sets_and_reps: List[str]
-    rest_times: List[str]
-    notes: str
+    title: str = dspy.OutputField()
+    description: str = dspy.OutputField()
+    exercises: List[Dict[str, Any]] = dspy.OutputField()
+    sets_and_reps: List[str] = dspy.OutputField()
+    rest_times: List[str] = dspy.OutputField()
+    notes: str = dspy.OutputField()
 
 class WorkoutGenerator(dspy.Module):
     """Module to generate a workout plan based on user input and available equipment."""
