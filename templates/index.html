@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Workout Vibe - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h1 class="display-4 fw-bold">Welcome to Workout Vibe</h1>
+                <p class="lead">Generate personalized workouts powered by AI</p>
+                <hr class="my-4">
+                <p>Create a customized workout plan based on your preferences and available equipment.</p>
+                <a href="{{ url_for('new_workout') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create New Workout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-dumbbell me-2"></i>Your Gyms</h5>
+            </div>
+            <div class="card-body">
+                {% if gyms %}
+                    <div class="list-group">
+                        {% for gym in gyms %}
+                            <a href="{{ url_for('view_gym', gym_id=gym.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ gym.name }}</h5>
+                                </div>
+                                {% if gym.location %}
+                                    <p class="mb-1 text-muted"><small><i class="fas fa-map-marker-alt me-1"></i>{{ gym.location }}</small></p>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>You haven't added any gyms yet.</p>
+                        <a href="{{ url_for('new_gym') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-2"></i>Add a Gym
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            {% if gyms %}
+                <div class="card-footer">
+                    <a href="{{ url_for('new_gym') }}" class="btn btn-outline-dark btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Another Gym
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Workouts</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_workouts %}
+                    <div class="list-group">
+                        {% for workout in recent_workouts %}
+                            <a href="{{ url_for('workout_summary', workout_id=workout.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ workout.title }}</h5>
+                                    <small>{{ workout.date }}</small>
+                                </div>
+                                <p class="mb-1">{{ workout.description[:100] }}{% if workout.description|length > 100 %}...{% endif %}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>You haven't completed any workouts yet.</p>
+                        <a href="{{ url_for('new_workout') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-2"></i>Create Your First Workout
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            {% if recent_workouts %}
+                <div class="card-footer">
+                    <a href="{{ url_for('workout_history') }}" class="btn btn-outline-dark btn-sm">View All Workouts</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>API Key Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="fab fa-openai fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">OpenAI</h5>
+                                {% if api_key_status.openai %}
+                                    <span class="badge bg-success">Connected</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Not Connected</span>
+                                    <p class="text-muted mt-1">Set the OPENAI_API_KEY environment variable</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <i class="fas fa-robot fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Claude</h5>
+                                {% if api_key_status.claude %}
+                                    <span class="badge bg-success">Connected</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Not Connected</span>
+                                    <p class="text-muted mt-1">Set the ANTHROPIC_API_KEY environment variable</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

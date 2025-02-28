@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ workout.title }} - Workout Vibe{% endblock %}
+
+{% block head %}
+<style>
+    .timer-container {
+        position: sticky;
+        top: 70px;
+        z-index: 100;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 0.375rem;
+        border: 1px solid #ddd;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .exercise-progress {
+        height: 8px;
+    }
+    .set-card {
+        transition: all 0.3s ease;
+    }
+    .completed-set {
+        background-color: #d1e7dd;
+        border-color: #badbcc;
+    }
+    .current-set {
+        border-color: #0d6efd;
+        border-width: 2px;
+    }
+    .weight-input-group {
+        max-width: 180px;
+    }
+    .rep-input-group {
+        max-width: 120px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item active">{{ workout.title }}</li>
+            </ol>
+        </nav>
+        
+        <!-- Workout Header -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-play-circle me-2"></i>{{ workout.title }}</h3>
+            </div>
+            <div class="card-body">
+                <p class="lead">{{ workout.description }}</p>
+                
+                <!-- Rest Timer -->
+                <div class="timer-container p-3 mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5 class="mb-0"><i class="fas fa-stopwatch me-2"></i>Rest Timer</h5>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div id="timer-display" class="display-4 mb-0">00:00</div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group">
+                                <button id="timer-30" class="btn btn-sm btn-outline-secondary" onclick="setTimer(30)">30s</button>
+                                <button id="timer-60" class="btn btn-sm btn-outline-secondary" onclick="setTimer(60)">60s</button>
+                                <button id="timer-90" class="btn btn-sm btn-outline-secondary" onclick="setTimer(90)">90s</button>
+                                <button id="timer-120" class="btn btn-sm btn-outline-secondary" onclick="setTimer(120)">120s</button>
+                            </div>
+                            <button id="timer-toggle" class="btn btn-primary ms-2" onclick="toggleTimer()">Start</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exercise progress -->
+                <div class="progress exercise-progress mb-4">
+                    <div id="exercise-progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                
+                <!-- Exercises -->
+                <div id="exercises-container">
+                    {% for exercise in workout_data.exercises %}
+                    <div id="exercise-{{ loop.index }}" class="exercise-container mb-5" {% if loop.index > 1 %}style="display: none;"{% endif %}>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4>{{ loop.index }}. {{ exercise.name }}</h4>
+                            <div>
+                                <span class="badge bg-secondary me-1">{{ exercise.muscle_group }}</span>
+                                <span class="badge bg-secondary">{{ exercise.equipment }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Sets for this exercise -->
+                        <div class="sets-container">
+                            {% for i in range(1, exercise.sets + 1) %}
+                            <div id="set-{{ loop.parent.index }}-{{ i }}" class="set-card card mb-3 {% if i == 1 and loop.parent.index == 1 %}current-set{% endif %}">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Set {{ i }}</h5>
+                                    <span class="set-status badge bg-secondary">Pending</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label">Weight</label>
+                                            <div class="input-group weight-input-group">
+                                                <input type="number" class="form-control weight-input" placeholder="0">
+                                                <span class="input-group-text">lbs</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label">Reps</label>
+                                            <div class="input-group rep-input-group">
+                                                <input type="number" class="form-control reps-input" placeholder="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-md-end">
+                                            <label class="form-label d-block">&nbsp;</label>
+                                            <button class="btn btn-success complete-set-btn" data-exercise="{{ loop.parent.index }}" data-set="{{ i }}">
+                                                <i class="fas fa-check me-1"></i>Complete Set
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label class="form-label">Notes (optional)</label>
+                                        <textarea class="form-control notes-input" rows="1" placeholder="How did this set feel?"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Navigation buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            {% if loop.index > 1 %}
+                            <button class="btn btn-outline-secondary prev-exercise-btn" data-target="{{ loop.index - 1 }}">
+                                <i class="fas fa-arrow-left me-1"></i>Previous Exercise
+                            </button>
+                            {% else %}
+                            <div></div>
+                            {% endif %}
+                            
+                            {% if not loop.last %}
+                            <button class="btn btn-primary next-exercise-btn" data-target="{{ loop.index + 1 }}">
+                                Next Exercise<i class="fas fa-arrow-right ms-1"></i>
+                            </button>
+                            {% else %}
+                            <button class="btn btn-success" id="finish-workout-btn">
+                                <i class="fas fa-flag-checkered me-1"></i>Finish Workout
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workout Notes -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Workout Notes</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Sets & Reps</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for item in workout_data.sets_and_reps %}
+                                    <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Rest Times</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for item in workout_data.rest_times %}
+                                    <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if workout_data.notes %}
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-lightbulb me-2"></i>Tips</h5>
+                    <p>{{ workout_data.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Workout data
+    const workoutId = {{ workout.id }};
+    const totalExercises = {{ workout_data.exercises|length }};
+    let completedExercises = 0;
+    
+    // Timer variables
+    let timerInterval;
+    let timerRunning = false;
+    let timerSeconds = 0;
+    const timerDisplay = document.getElementById('timer-display');
+    const timerToggle = document.getElementById('timer-toggle');
+    
+    // Set timer for specific duration
+    function setTimer(seconds) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerSeconds = seconds;
+        updateTimerDisplay();
+        timerToggle.textContent = 'Start';
+    }
+    
+    // Toggle timer start/pause
+    function toggleTimer() {
+        if (timerRunning) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerToggle.textContent = 'Resume';
+        } else {
+            if (timerSeconds <= 0) {
+                timerSeconds = 60; // Default to 60 seconds if not set
+            }
+            timerInterval = setInterval(updateTimer, 1000);
+            timerRunning = true;
+            timerToggle.textContent = 'Pause';
+        }
+    }
+    
+    // Update timer countdown
+    function updateTimer() {
+        if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+        } else {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerToggle.textContent = 'Start';
+            playTimerEndSound();
+        }
+    }
+    
+    // Update timer display
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timerSeconds / 60);
+        const seconds = timerSeconds % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Play sound when timer ends
+    function playTimerEndSound() {
+        // Create and play a beep sound
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.5;
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start();
+        setTimeout(() => {
+            oscillator.stop();
+        }, 1000);
+    }
+    
+    // Switch to a specific exercise
+    function switchToExercise(exerciseNumber) {
+        // Hide all exercises
+        document.querySelectorAll('.exercise-container').forEach(container => {
+            container.style.display = 'none';
+        });
+        
+        // Show the selected exercise
+        const exerciseContainer = document.getElementById(`exercise-${exerciseNumber}`);
+        if (exerciseContainer) {
+            exerciseContainer.style.display = 'block';
+        }
+        
+        // Update progress bar
+        updateProgressBar();
+    }
+    
+    // Update the exercise progress bar
+    function updateProgressBar() {
+        const progressBar = document.getElementById('exercise-progress-bar');
+        const progressPercentage = (completedExercises / totalExercises) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+    }
+    
+    // Mark a set as complete
+    function completeSet(exerciseIndex, setIndex) {
+        const setCard = document.getElementById(`set-${exerciseIndex}-${setIndex}`);
+        const weightInput = setCard.querySelector('.weight-input');
+        const repsInput = setCard.querySelector('.reps-input');
+        const notesInput = setCard.querySelector('.notes-input');
+        const statusBadge = setCard.querySelector('.set-status');
+        
+        // Update UI
+        setCard.classList.add('completed-set');
+        setCard.classList.remove('current-set');
+        statusBadge.textContent = 'Completed';
+        statusBadge.classList.remove('bg-secondary');
+        statusBadge.classList.add('bg-success');
+        
+        // Log the set data to the server
+        logSetToServer(exerciseIndex, setIndex, weightInput.value, repsInput.value, notesInput.value);
+        
+        // Move to next set or exercise
+        const nextSetIndex = setIndex + 1;
+        const nextSetCard = document.getElementById(`set-${exerciseIndex}-${nextSetIndex}`);
+        
+        if (nextSetCard) {
+            // Move to next set in same exercise
+            nextSetCard.classList.add('current-set');
+            nextSetCard.scrollIntoView({ behavior: 'smooth' });
+            
+            // Reset timer for rest between sets
+            setTimer(60); // Default rest time
+            toggleTimer();
+        } else {
+            // All sets completed for this exercise
+            const exerciseElement = document.getElementById(`exercise-${exerciseIndex}`);
+            const allSetsCompleted = Array.from(exerciseElement.querySelectorAll('.set-card')).every(card => 
+                card.classList.contains('completed-set')
+            );
+            
+            if (allSetsCompleted) {
+                completedExercises++;
+                updateProgressBar();
+                
+                // Move to next exercise if available
+                if (exerciseIndex < totalExercises) {
+                    const nextExerciseBtn = exerciseElement.querySelector('.next-exercise-btn');
+                    if (nextExerciseBtn) {
+                        // Reset timer for rest between exercises
+                        setTimer(90); // Default rest time between exercises
+                        toggleTimer();
+                        
+                        // Move to next exercise after a short delay
+                        setTimeout(() => {
+                            const nextExerciseIndex = parseInt(nextExerciseBtn.dataset.target);
+                            switchToExercise(nextExerciseIndex);
+                            
+                            // Mark first set of next exercise as current
+                            const firstSetOfNextEx = document.getElementById(`set-${nextExerciseIndex}-1`);
+                            if (firstSetOfNextEx) {
+                                firstSetOfNextEx.classList.add('current-set');
+                            }
+                        }, 500);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Log a completed set to the server
+    function logSetToServer(exerciseIndex, setIndex, weight, reps, notes) {
+        const exerciseName = document.querySelector(`#exercise-${exerciseIndex} h4`).textContent.replace(/^\d+\.\s+/, '');
+        
+        fetch('{{ url_for("log_set") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                workout_id: workoutId,
+                exercise_name: exerciseName,
+                set_number: setIndex,
+                weight: weight || null,
+                reps: reps || null,
+                notes: notes || null,
+                rest_time: timerSeconds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Set logged successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error logging set:', error);
+        });
+    }
+    
+    // Document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize timer display
+        updateTimerDisplay();
+        
+        // Set up complete set buttons
+        document.querySelectorAll('.complete-set-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const exerciseIndex = parseInt(this.dataset.exercise);
+                const setIndex = parseInt(this.dataset.set);
+                completeSet(exerciseIndex, setIndex);
+            });
+        });
+        
+        // Set up navigation buttons
+        document.querySelectorAll('.prev-exercise-btn, .next-exercise-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetExercise = parseInt(this.dataset.target);
+                switchToExercise(targetExercise);
+            });
+        });
+        
+        // Finish workout button
+        document.getElementById('finish-workout-btn').addEventListener('click', function() {
+            // Check if all exercises are completed
+            const allCompleted = completedExercises === totalExercises;
+            
+            if (!allCompleted) {
+                if (!confirm('You haven\'t completed all exercises. Are you sure you want to finish the workout?')) {
+                    return;
+                }
+            }
+            
+            // Redirect to workout summary
+            window.location.href = '{{ url_for("workout_summary", workout_id=workout.id) }}';
+        });
+    });
+</script>
+{% endblock %}

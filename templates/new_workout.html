@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}New Workout - Workout Vibe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item active">New Workout</li>
+            </ol>
+        </nav>
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Create New Workout</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-4">
+                        <h5>Step 1: Select AI Model</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="model_provider" id="openai" value="openai" checked {% if not api_key_status.openai %}disabled{% endif %}>
+                                    <label class="form-check-label" for="openai">
+                                        <i class="fab fa-openai me-2"></i>OpenAI
+                                        {% if not api_key_status.openai %}
+                                            <span class="badge bg-danger">API Key Missing</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="model_provider" id="claude" value="claude" {% if not api_key_status.claude %}disabled{% endif %}>
+                                    <label class="form-check-label" for="claude">
+                                        <i class="fas fa-robot me-2"></i>Claude
+                                        {% if not api_key_status.claude %}
+                                            <span class="badge bg-danger">API Key Missing</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Step 2: Select Your Gym (Optional)</h5>
+                        <select name="gym_id" class="form-select">
+                            <option value="none">No gym selected (use any equipment)</option>
+                            {% for gym in gyms %}
+                                <option value="{{ gym.id }}">{{ gym.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Selecting a gym will limit your workout to the equipment available at that location.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Step 3: Describe Your Workout</h5>
+                        <div class="mb-3">
+                            <label for="workout_description" class="form-label">What kind of workout are you looking for?</label>
+                            <textarea id="workout_description" name="workout_description" class="form-control" rows="5" placeholder="Example: I want a 30-minute upper body workout focusing on chest and shoulders" required></textarea>
+                        </div>
+                        <div class="form-text mb-3">
+                            Be specific about:
+                            <ul>
+                                <li>Muscle groups you want to target</li>
+                                <li>Time available for the workout</li>
+                                <li>Goals (strength, hypertrophy, endurance, etc.)</li>
+                                <li>Experience level (beginner, intermediate, advanced)</li>
+                                <li>Any specific equipment preferences</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>Examples:</strong>
+                            <ul>
+                                <li>"I need a quick 20-minute full body workout I can do at home with minimal equipment"</li>
+                                <li>"Create a leg day workout for hypertrophy at an intermediate level"</li>
+                                <li>"Design a back and biceps workout for strength training"</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-dumbbell me-2"></i>Generate Workout
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup - Workout Vibe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-cog me-2"></i>Initial Setup</h3>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-dumbbell fa-5x mb-4 text-primary"></i>
+                <h2 class="mb-3">Welcome to Workout Vibe!</h2>
+                <p class="lead mb-4">We need to create the exercise database before you can start using the app.</p>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This will create a SQLite database with sample exercises for various muscle groups.
+                </div>
+                
+                <form method="post" action="{{ url_for('setup') }}">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-database me-2"></i>Create Exercise Database
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

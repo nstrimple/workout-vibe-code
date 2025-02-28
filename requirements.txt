@@ -1,0 +1,8 @@
+dspy-ai>=2.0.0
+anthropic>=0.18.0
+openai>=1.9.0
+flask>=2.2.0
+numpy>=1.24.0
+argparse
+python-dotenv
+werkzeug>=2.2.0

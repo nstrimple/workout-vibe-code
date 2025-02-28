@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Workout Summary - {{ workout.title }} - Workout Vibe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('workout_history') }}">Workout History</a></li>
+                <li class="breadcrumb-item active">{{ workout.title }}</li>
+            </ol>
+        </nav>
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><i class="fas fa-check-circle me-2"></i>Workout Completed</h3>
+                    <span class="badge bg-light text-dark">{{ workout.date }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h2>{{ workout.title }}</h2>
+                    <p class="lead">{{ workout.description }}</p>
+                    
+                    {% if gym %}
+                    <div class="badge bg-primary p-2 mb-3">
+                        <i class="fas fa-dumbbell me-1"></i>{{ gym.name }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Workout Summary -->
+                <div class="row mb-4">
+                    <div class="col-lg-8 offset-lg-2">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Performance Summary</h4>
+                            </div>
+                            <div class="card-body">
+                                {% if logs_by_exercise %}
+                                    {% for exercise_name, logs in logs_by_exercise.items() %}
+                                    <div class="mb-4">
+                                        <h5>{{ exercise_name }}</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Set</th>
+                                                        <th>Weight</th>
+                                                        <th>Reps</th>
+                                                        <th>Rest Time</th>
+                                                        <th>Notes</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for log in logs %}
+                                                    <tr>
+                                                        <td>{{ log.set_number }}</td>
+                                                        <td>{{ log.weight|default('--', true) }} {% if log.weight %}lbs{% endif %}</td>
+                                                        <td>{{ log.reps|default('--', true) }}</td>
+                                                        <td>{{ log.rest_time|default('--', true) }} {% if log.rest_time %}sec{% endif %}</td>
+                                                        <td>{{ log.notes|default('--', true) }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>No detailed performance data was logged for this workout.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Workout Details -->
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Sets & Reps</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for item in workout.workout_data.sets_and_reps %}
+                                    <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Rest Times</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for item in workout.workout_data.rest_times %}
+                                    <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if workout.workout_data.notes %}
+                <div class="alert alert-info mb-4">
+                    <h5><i class="fas fa-lightbulb me-2"></i>Coach Notes</h5>
+                    <p class="mb-0">{{ workout.workout_data.notes }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('workout_history') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to History
+                    </a>
+                    <a href="{{ url_for('new_workout') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Create New Workout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

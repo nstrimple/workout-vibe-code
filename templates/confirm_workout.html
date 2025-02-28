@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Workout - Workout Vibe{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('new_workout') }}">New Workout</a></li>
+                <li class="breadcrumb-item active">Confirm Workout</li>
+            </ol>
+        </nav>
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-check-circle me-2"></i>Confirm Your Workout</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h2>{{ workout.title }}</h2>
+                    <p class="lead">{{ workout.description }}</p>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-lg-8 offset-lg-2">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Exercises</h4>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                {% for exercise in workout.exercises %}
+                                <li class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h5 class="mb-1">{{ exercise.name }}</h5>
+                                            <p class="mb-0 text-muted">
+                                                <span class="badge bg-secondary me-2">{{ exercise.muscle_group }}</span>
+                                                <span class="badge bg-secondary">{{ exercise.equipment }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="text-end">
+                                            <strong>
+                                                {% if exercise.sets %}{{ exercise.sets }} sets{% endif %}
+                                                {% if exercise.reps %} × {{ exercise.reps }} reps{% endif %}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Sets & Reps</h4>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for item in workout.sets_and_reps %}
+                                    <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h4 class="mb-0">Rest Times</h4>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for item in workout.rest_times %}
+                                    <li class="list-group-item">{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if workout.notes %}
+                <div class="alert alert-info mb-4">
+                    <h5><i class="fas fa-info-circle me-2"></i>Notes</h5>
+                    <p class="mb-0">{{ workout.notes }}</p>
+                </div>
+                {% endif %}
+                
+                <form method="post" class="d-flex gap-2">
+                    <a href="{{ url_for('new_workout') }}" class="btn btn-outline-secondary flex-grow-1">
+                        <i class="fas fa-arrow-left me-2"></i>Go Back
+                    </a>
+                    <button type="submit" class="btn btn-success flex-grow-1">
+                        <i class="fas fa-play-circle me-2"></i>Start Workout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

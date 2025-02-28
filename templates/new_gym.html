@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Gym - Workout Vibe{% endblock %}
+
+{% block head %}
+<style>
+    .equipment-item {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .remove-equipment {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item active">Add New Gym</li>
+            </ol>
+        </nav>
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-dumbbell me-2"></i>Add New Gym</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" id="gym-form">
+                    <div class="mb-4">
+                        <h5>Gym Information</h5>
+                        <div class="mb-3">
+                            <label for="gym_name" class="form-label">Gym Name</label>
+                            <input type="text" class="form-control" id="gym_name" name="gym_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location (Optional)</label>
+                            <input type="text" class="form-control" id="location" name="location" placeholder="Home, Commercial Gym, etc.">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Brief description of your gym..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Equipment</h5>
+                            <button type="button" class="btn btn-outline-primary" id="add-equipment">
+                                <i class="fas fa-plus me-1"></i>Add Equipment
+                            </button>
+                        </div>
+                        
+                        <div id="equipment-container">
+                            <!-- Equipment items will be added here dynamically -->
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>Add the equipment available at your gym to help generate workouts tailored to your available resources.
+                            </div>
+                            
+                            <div class="equipment-item">
+                                <button type="button" class="btn-close remove-equipment" aria-label="Remove"></button>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Equipment Name</label>
+                                        <input type="text" class="form-control" name="equipment_name[]" placeholder="e.g., Barbell, Treadmill, etc." required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Category</label>
+                                        <select class="form-select" name="equipment_category[]" required>
+                                            <option value="">Select Category</option>
+                                            <option value="Cardio">Cardio</option>
+                                            <option value="Free Weights">Free Weights</option>
+                                            <option value="Machines">Machines</option>
+                                            <option value="Functional">Functional</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" name="equipment_quantity[]" placeholder="1" min="1" value="1">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Description (Optional)</label>
+                                        <input type="text" class="form-control" name="equipment_description[]" placeholder="e.g., Weight range, specifications, etc.">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Save Gym
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add new equipment item
+        document.getElementById('add-equipment').addEventListener('click', function() {
+            const container = document.getElementById('equipment-container');
+            const newItem = document.createElement('div');
+            newItem.className = 'equipment-item';
+            newItem.innerHTML = `
+                <button type="button" class="btn-close remove-equipment" aria-label="Remove"></button>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Equipment Name</label>
+                        <input type="text" class="form-control" name="equipment_name[]" placeholder="e.g., Barbell, Treadmill, etc." required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" name="equipment_category[]" required>
+                            <option value="">Select Category</option>
+                            <option value="Cardio">Cardio</option>
+                            <option value="Free Weights">Free Weights</option>
+                            <option value="Machines">Machines</option>
+                            <option value="Functional">Functional</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" name="equipment_quantity[]" placeholder="1" min="1" value="1">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Description (Optional)</label>
+                        <input type="text" class="form-control" name="equipment_description[]" placeholder="e.g., Weight range, specifications, etc.">
+                    </div>
+                </div>
+            `;
+            container.appendChild(newItem);
+            
+            // Add event listener to the new remove button
+            newItem.querySelector('.remove-equipment').addEventListener('click', function() {
+                container.removeChild(newItem);
+            });
+        });
+        
+        // Initial remove equipment buttons
+        document.querySelectorAll('.remove-equipment').forEach(button => {
+            button.addEventListener('click', function() {
+                // Don't remove if it's the last equipment item
+                const items = document.querySelectorAll('.equipment-item');
+                if (items.length > 1) {
+                    this.closest('.equipment-item').remove();
+                } else {
+                    alert('You need at least one piece of equipment for your gym.');
+                }
+            });
+        });
+        
+        // Form validation
+        document.getElementById('gym-form').addEventListener('submit', function(e) {
+            const gymName = document.getElementById('gym_name').value.trim();
+            if (!gymName) {
+                e.preventDefault();
+                alert('Please enter a name for your gym');
+                return;
+            }
+            
+            const equipmentNames = document.querySelectorAll('input[name="equipment_name[]"]');
+            const equipmentCategories = document.querySelectorAll('select[name="equipment_category[]"]');
+            
+            let valid = true;
+            equipmentNames.forEach((input, index) => {
+                if (!input.value.trim()) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+                
+                if (!equipmentCategories[index].value) {
+                    valid = false;
+                    equipmentCategories[index].classList.add('is-invalid');
+                } else {
+                    equipmentCategories[index].classList.remove('is-invalid');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                alert('Please fill in all required equipment fields');
+            }
+        });
+    });
+</script>
+{% endblock %}
