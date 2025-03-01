@@ -6,6 +6,7 @@ import argparse
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+from dspy.retrieve.faiss_rm import FaissRM
 
 app = Flask(__name__)
 app.secret_key = 'workout_vibe_secret_key'  # For session management
@@ -152,8 +153,9 @@ class WorkoutGenerator(dspy.Module):
     
     def forward(self, description: str, gym_equipment: List[Dict]) -> WorkoutPlan:
         """Generate a workout plan based on user description and gym equipment."""
-        # Retrieve relevant exercises
-        exercises = self.retriever(description).passages
+        # Retrieve relevant exercises using FaissRM
+        # FaissRM returns a list of documents, not a passages object
+        retrieved_exercises = self.retriever([description])
         
         # Generate the workout plan
         workout_request = WorkoutRequest(
@@ -165,18 +167,16 @@ class WorkoutGenerator(dspy.Module):
         return workout_plan
 
 def setup_vector_db(exercises):
-    """Set up a vector database for exercises."""
-    # For simplicity, we'll use a list-based retriever
-    # In a real application, you might want to use a proper vector DB
-    
-    passages = []
+    """Set up a vector database for exercises using Faiss."""
+    # Create document chunks for Faiss
+    document_chunks = []
     for exercise in exercises:
         passage_text = (f"Exercise ID: {exercise['id']}, Name: {exercise['name']}, "
                         f"Muscle Group: {exercise['muscle_group']}, Equipment: {exercise['equipment']}")
-        # In dspy 2.x+, use dictionaries instead of Passage objects
-        passages.append({"text": passage_text, "id": exercise['id']})
+        document_chunks.append(passage_text)
     
-    return dspy.SimpleRetriever(passages=passages)
+    # Create and return the Faiss retriever
+    return FaissRM(document_chunks)
 
 def configure_lm(provider='openai'):
     """Configure the language model based on provider."""
