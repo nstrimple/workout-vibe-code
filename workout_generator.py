@@ -81,7 +81,8 @@ def setup_vector_db(exercises):
     for exercise in exercises:
         passage_text = (f"Exercise ID: {exercise['id']}, Name: {exercise['name']}, "
                         f"Muscle Group: {exercise['muscle_group']}, Equipment: {exercise['equipment']}")
-        passages.append(dspy.Passage(text=passage_text, id=exercise['id']))
+        # In dspy 2.x+, use dictionaries instead of Passage objects
+        passages.append({"text": passage_text, "id": exercise['id']})
     
     return dspy.SimpleRetriever(passages=passages)
 
