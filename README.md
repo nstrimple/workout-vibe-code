@@ -23,12 +23,24 @@ git clone https://github.com/your-username/workout-vibe-code.git
 cd workout-vibe-code
 ```
 
-2. Install dependencies:
+2. Create and activate a virtual environment:
+```bash
+# Create a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+# On Windows
+venv\Scripts\activate
+# On macOS/Linux
+source venv/bin/activate
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Set up your API keys as environment variables:
+4. Set up your API keys as environment variables:
 ```bash
 # For OpenAI
 export OPENAI_API_KEY=your_openai_api_key
@@ -37,14 +49,14 @@ export OPENAI_API_KEY=your_openai_api_key
 export ANTHROPIC_API_KEY=your_anthropic_api_key
 ```
 
-4. Start the Flask application:
+5. Start the Flask application:
 ```bash
 python app.py
 ```
 
 The application will automatically create the exercise database on first run if it doesn't exist.
 
-5. Open your browser and navigate to:
+6. Open your browser and navigate to:
 ```
 http://localhost:5000
 ```

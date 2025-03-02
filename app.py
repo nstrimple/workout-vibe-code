@@ -6,7 +6,7 @@ import argparse
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from dspy.retrieve.faiss_rm import FaissRM
+# No longer using FaissRM for retrieval
 
 app = Flask(__name__)
 app.secret_key = 'workout_vibe_secret_key'  # For session management
@@ -131,6 +131,7 @@ class WorkoutRequest(dspy.Signature):
     """A request for a workout."""
     description: str = dspy.InputField()
     gym_equipment: List[Dict] = dspy.InputField()
+    available_exercises: List[Dict] = dspy.InputField()
 
 class WorkoutPlan(dspy.Signature):
     """A workout plan with exercises."""
@@ -144,39 +145,113 @@ class WorkoutPlan(dspy.Signature):
 class WorkoutGenerator(dspy.Module):
     """Module to generate a workout plan based on user input and available equipment."""
     
-    def __init__(self, retriever):
+    def __init__(self):
         super().__init__()
-        self.retriever = retriever
         self.generate_workout = dspy.ChainOfThought(
             WorkoutRequest, WorkoutPlan
         )
+        # Use ExerciseDB directly instead of a retriever
+        self.exercise_db = ExerciseDB()
     
     def forward(self, description: str, gym_equipment: List[Dict]) -> WorkoutPlan:
         """Generate a workout plan based on user description and gym equipment."""
-        # Retrieve relevant exercises using FaissRM
-        # FaissRM returns a list of documents, not a passages object
-        retrieved_exercises = self.retriever([description])
+        # Find relevant exercises using direct database queries
+        # Extract potential muscle groups and equipment from description
+        relevant_exercises = self.find_exercises_for_workout(description)
         
         # Generate the workout plan
         workout_request = WorkoutRequest(
             description=description,
-            gym_equipment=gym_equipment
+            gym_equipment=gym_equipment,
+            available_exercises=relevant_exercises
         )
         workout_plan = self.generate_workout(workout_request)
         
         return workout_plan
-
-def setup_vector_db(exercises):
-    """Set up a vector database for exercises using Faiss."""
-    # Create document chunks for Faiss
-    document_chunks = []
-    for exercise in exercises:
-        passage_text = (f"Exercise ID: {exercise['id']}, Name: {exercise['name']}, "
-                        f"Muscle Group: {exercise['muscle_group']}, Equipment: {exercise['equipment']}")
-        document_chunks.append(passage_text)
     
-    # Create and return the Faiss retriever
-    return FaissRM(document_chunks)
+    def find_exercises_for_workout(self, description):
+        """Find exercises that match the workout description."""
+        # Extract potential muscle groups and equipment from description
+        muscle_groups = self._extract_muscle_groups(description)
+        equipment = self._extract_equipment(description)
+        
+        # Build query based on extracted terms
+        params = []
+        conditions = []
+        
+        if muscle_groups:
+            placeholders = ', '.join(['?'] * len(muscle_groups))
+            conditions.append(f"muscle_group IN ({placeholders})")
+            params.extend(muscle_groups)
+        
+        if equipment:
+            placeholders = ', '.join(['?'] * len(equipment))
+            conditions.append(f"equipment IN ({placeholders})")
+            params.extend(equipment)
+        
+        # If no specific conditions, return a diverse set
+        if not conditions:
+            # Get a variety of exercises across different muscle groups
+            return self._get_diverse_exercise_set()
+        
+        # Execute the query
+        query = f"SELECT * FROM exercises WHERE {' OR '.join(conditions)}"
+        self.exercise_db.cursor.execute(query, params)
+        return [dict(row) for row in self.exercise_db.cursor.fetchall()]
+    
+    def _get_diverse_exercise_set(self, limit_per_group=3):
+        """Get a diverse set of exercises covering different muscle groups."""
+        # Get distinct muscle groups
+        self.exercise_db.cursor.execute("SELECT DISTINCT muscle_group FROM exercises")
+        muscle_groups = [row[0] for row in self.exercise_db.cursor.fetchall()]
+        
+        # Get exercises for each muscle group
+        results = []
+        for group in muscle_groups:
+            self.exercise_db.cursor.execute(
+                "SELECT * FROM exercises WHERE muscle_group = ? LIMIT ?", 
+                (group, limit_per_group)
+            )
+            results.extend([dict(row) for row in self.exercise_db.cursor.fetchall()])
+        
+        return results
+    
+    def _extract_muscle_groups(self, description):
+        """Extract potential muscle groups from a description."""
+        common_muscle_groups = [
+            "Chest", "Back", "Legs", "Shoulders", "Arms", 
+            "Biceps", "Triceps", "Abs", "Core", "Glutes", 
+            "Quads", "Hamstrings", "Calves"
+        ]
+        
+        # Find mentioned muscle groups
+        found_groups = []
+        description_lower = description.lower()
+        
+        for group in common_muscle_groups:
+            if group.lower() in description_lower:
+                found_groups.append(group)
+        
+        return found_groups
+    
+    def _extract_equipment(self, description):
+        """Extract potential equipment from a description."""
+        common_equipment = [
+            "Barbell", "Dumbbells", "Machine", "Cable", "Bodyweight",
+            "Kettlebell", "Resistance Band", "Smith Machine", "TRX"
+        ]
+        
+        # Find mentioned equipment
+        found_equipment = []
+        description_lower = description.lower()
+        
+        for equip in common_equipment:
+            if equip.lower() in description_lower:
+                found_equipment.append(equip)
+        
+        return found_equipment
+
+# No longer using setup_vector_db - directly querying SQLite instead
 
 def configure_lm(provider='openai'):
     """Configure the language model based on provider."""
@@ -482,19 +557,11 @@ def new_workout():
             } for item in equipment]
         
         try:
-            # Load exercises
-            exercise_db = ExerciseDB()
-            all_exercises = exercise_db.get_all_exercises()
-            exercise_db.close()
-            
             # Configure LLM
             dspy.settings.configure(lm=configure_lm(session['model_provider']))
             
-            # Set up the retriever
-            retriever = setup_vector_db(all_exercises)
-            
             # Create and optimize the workout generator
-            workout_generator = WorkoutGenerator(retriever)
+            workout_generator = WorkoutGenerator()
             
             # Bootstrap with examples for better performance
             examples = bootstrap_examples()
